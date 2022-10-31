@@ -1,0 +1,14 @@
+{
+  "orderLineItemsDtoList": [
+    {
+      "skuCode": "IPhone_14",
+      "price": 800,
+      "quantity": 1
+    },
+    {
+      "skuCode": "IPhone_14_Pro",
+      "price": 1000,
+      "quantity": 1
+    }
+  ]
+}

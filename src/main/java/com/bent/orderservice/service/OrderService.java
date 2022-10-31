@@ -13,7 +13,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -30,9 +29,12 @@ public class OrderService {
                 .map(OrderLineItems::getSkuCode)
                 .toList();
 
-        if (Boolean.TRUE.equals(areProductsInStock(skuCodes))) {
-            orderRepository.save(order);
+        Boolean allProductsInStock = Arrays.stream(areProductsInStock(skuCodes))
+                .allMatch(InventoryResponse::getIsInStock);
+
+        if (Boolean.TRUE.equals(allProductsInStock)) {
             log.info("Order {} is saved successfully!", order.getId());
+            orderRepository.save(order);
         } else {
             throw new IllegalArgumentException("Product is not in stock, please try again later");
         }
@@ -50,20 +52,17 @@ public class OrderService {
     }
 
     /**
-     * @return true if product is in stock
+     * @return InventoryResponse array
      * @implNote This method Call inventory service, and place order if product is in stock
      */
-    public Boolean areProductsInStock(List<String> skuCodes) {
-        return Arrays
-                .stream(Objects.requireNonNull(
-                        webClientBuilder.build().get()
-                                .uri("http://localhost:8081/api/inventory",
-                                        uriBuilder -> uriBuilder
-                                                .queryParam("skuCodes", skuCodes)
-                                                .build())
-                                .retrieve()
-                                .bodyToMono(InventoryResponse[].class)
-                                .block()))
-                .allMatch(InventoryResponse::getIsInStock);
+    public InventoryResponse[] areProductsInStock(List<String> skuCodes) {
+        return webClientBuilder.build().get()
+                .uri("http://localhost:8083/api/inventory",
+                        uriBuilder -> uriBuilder
+                                .queryParam("skuCodes", skuCodes)
+                                .build())
+                .retrieve()
+                .bodyToMono(InventoryResponse[].class)
+                .block();
     }
 }
