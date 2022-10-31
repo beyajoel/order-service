@@ -22,7 +22,7 @@ import java.util.UUID;
 public class OrderService {
     private final OrderMapper orderMapper;
     private final OrderRepository orderRepository;
-    private final WebClient webClient;
+    private final WebClient.Builder webClientBuilder;
 
     public void placeOrder(OrderRequest orderRequest) {
         Order order = getOrderFromRequest(orderRequest);
@@ -56,7 +56,7 @@ public class OrderService {
     public Boolean areProductsInStock(List<String> skuCodes) {
         return Arrays
                 .stream(Objects.requireNonNull(
-                        webClient.get()
+                        webClientBuilder.build().get()
                                 .uri("http://localhost:8081/api/inventory",
                                         uriBuilder -> uriBuilder
                                                 .queryParam("skuCodes", skuCodes)
