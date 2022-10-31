@@ -16,6 +16,6 @@ public class OrderController {
     @ResponseStatus(HttpStatus.CREATED)
     public String placeOrder(@RequestBody OrderRequest orderRequest) {
         orderService.placeOrder(orderRequest);
-        return "Order " + orderRequest + " Placed Successfully!";
+        return "Order %s is Placed Successfully!".formatted(orderRequest.getOrderLineItemsDtoList().get(0).getSkuCode());
     }
 }
