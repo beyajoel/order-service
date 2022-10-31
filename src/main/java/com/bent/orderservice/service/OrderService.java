@@ -55,16 +55,15 @@ public class OrderService {
      */
     public Boolean areProductsInStock(List<String> skuCodes) {
         return Arrays
-                .stream(
-                        Objects.requireNonNull(
-                                webClient.get()
-                                        .uri("http://localhost:8081/api/inventory",
-                                                uriBuilder -> uriBuilder
-                                                        .queryParam("skuCodes", skuCodes)
-                                                        .build())
-                                        .retrieve()
-                                        .bodyToMono(InventoryResponse[].class)
-                                        .block()))
+                .stream(Objects.requireNonNull(
+                        webClient.get()
+                                .uri("http://localhost:8081/api/inventory",
+                                        uriBuilder -> uriBuilder
+                                                .queryParam("skuCodes", skuCodes)
+                                                .build())
+                                .retrieve()
+                                .bodyToMono(InventoryResponse[].class)
+                                .block()))
                 .allMatch(InventoryResponse::getIsInStock);
     }
 }
