@@ -1,5 +1,6 @@
 package com.bent.orderservice.service;
 
+import com.bent.orderservice.dto.InventoryResponse;
 import com.bent.orderservice.dto.OrderRequest;
 import com.bent.orderservice.mapper.OrderMapper;
 import com.bent.orderservice.model.Order;
@@ -10,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -23,13 +26,11 @@ public class OrderService {
 
     public void placeOrder(OrderRequest orderRequest) {
         Order order = getOrderFromRequest(orderRequest);
+        List<String> skuCodes = order.getOrderLineItemsList().stream()
+                .map(OrderLineItems::getSkuCode)
+                .toList();
 
-
-        Boolean result = isProductInStock(order.getOrderLineItemsList().stream()
-                        .map(OrderLineItems::getSkuCode)
-                        .toList());
-
-        if (Boolean.TRUE.equals(result)) {
+        if (Boolean.TRUE.equals(areProductsInStock(skuCodes))) {
             orderRepository.save(order);
             log.info("Order {} is saved successfully!", order.getId());
         } else {
@@ -52,12 +53,18 @@ public class OrderService {
      * @return true if product is in stock
      * @implNote This method Call inventory service, and place order if product is in stock
      */
-    public Boolean isProductInStock(List<String> skuCodes) {
-        return webClient.get()
-                .uri("http://localhost:8081/api/inventory",
-                        uriBuilder -> uriBuilder.queryParam("skuCodes", skuCodes).build())
-                .retrieve()
-                .bodyToMono(Boolean.class)
-                .block();
+    public Boolean areProductsInStock(List<String> skuCodes) {
+        return Arrays
+                .stream(
+                        Objects.requireNonNull(
+                                webClient.get()
+                                        .uri("http://localhost:8081/api/inventory",
+                                                uriBuilder -> uriBuilder
+                                                        .queryParam("skuCodes", skuCodes)
+                                                        .build())
+                                        .retrieve()
+                                        .bodyToMono(InventoryResponse[].class)
+                                        .block()))
+                .allMatch(InventoryResponse::getIsInStock);
     }
 }
